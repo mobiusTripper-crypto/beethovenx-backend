@@ -17,6 +17,7 @@ import { scheduleWorkerTasks } from './app/scheduleWorkerTasks';
 import { redis } from './modules/cache/redis';
 import { scheduleMainTasks } from './app/scheduleMainTasks';
 import helmet from 'helmet';
+import { RateLimiterRedis } from 'rate-limiter-flexible';
 
 async function startServer() {
     //need to open the redis connection prior to adding the rate limit middleware
@@ -35,6 +36,26 @@ async function startServer() {
     app.use(helmet.referrerPolicy());
     app.use(helmet.xssFilter());
 
+    const redisRateLimiter = redis.duplicate({ legacyMode: true });
+    await redisRateLimiter.connect();
+    const rateLimiter = new RateLimiterRedis({
+        storeClient: redisRateLimiter,
+        keyPrefix: 'middleware',
+        points: 200, // 200 requests
+        duration: 10, // per 10 second by IP
+    });
+
+    /*app.use((req, res, next) => {
+        rateLimiter
+            .consume(req.ip)
+            .then(() => {
+                next();
+            })
+            .catch(() => {
+                res.status(429).send('Too Many Requests');
+            });
+    });*/
+
     app.use(corsMiddleware);
     app.use(contextMiddleware);
     app.use(accountMiddleware);
@@ -52,7 +73,7 @@ async function startServer() {
             ApolloServerPluginLandingPageGraphQLPlayground(),
             ApolloServerPluginUsageReporting({
                 sendVariableValues: { all: true },
-                sendHeaders: { all: true },
+                sendHeaders: { onlyNames: ['AccountAddress'] },
             }),
         ],
         context: ({ req }) => req.context,

@@ -83,15 +83,15 @@ export class BeetsService {
                 ...,
                 "homeFeaturedPools": homeFeaturedPools[]{
                     ...,
-                    "image": image.asset->url + "?w=600"
+                    "image": image.asset->url
                 },
                 "homeNewsItems": homeNewsItems[]{
                     ...,
-                    "image": image.asset->url + "?w=600"
+                    "image": image.asset->url
                 },
                 "homeEducationItems": homeEducationItems[]{
                     ...,
-                    "image": image.asset->url + "?w=600"
+                    "image": image.asset->url
                 }
             }
         `);
